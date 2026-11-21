@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechStore — Магазин</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="logo" id="storeLogo">Tech<span>Store</span></div>
+            <div class="nav-actions">
+                <button id="adminBtn" class="btn btn-outline hidden">Админ-панель</button>
+                <button id="cartBtn" class="btn btn-secondary">
+                    Корзина (<span id="cartCount">0</span>)
+                </button>
+                <div id="authArea">
+                    <button id="loginOpenBtn" class="btn btn-primary">Войти</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h1 id="heroTitle">Каталог товаров</h1>
+            <p id="heroSubtitle">Актуальные гаджеты с быстрой доставкой</p>
+        </section>
+
+        <!-- Фильтры и поиск -->
+        <section class="catalog-controls">
+            <div id="categoryFilterBar" class="category-chips"></div>
+            <input type="text" id="catalogSearch" class="search-input" placeholder="Поиск по названию или тегам...">
+        </section>
+
+        <section id="productsGrid" class="products-grid"></section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p id="footerContact">support@techstore.ru • +7 (999) 000-00-00</p>
+        </div>
+    </footer>
+
+    <!-- Модальное окно: Авторизация / Регистрация -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-card">
+            <button class="close-btn" data-close="authModal">&times;</button>
+            <h2 id="authTitle">Вход в аккаунт</h2>
+            <form id="authForm">
+                <input type="text" id="authUsername" placeholder="Логин (только латиница, от 3 символов)" required>
+                <input type="password" id="authPassword" placeholder="Пароль (только латиница, от 5 символов)" required>
+                <p id="authError" class="error-text"></p>
+                <button type="submit" class="btn btn-primary full-width" id="authSubmitBtn">Войти</button>
+            </form>
+            <p class="switch-auth">
+                <span id="authSwitchText">Нет аккаунта?</span>
+                <a href="#" id="authSwitchLink">Зарегистрироваться</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Корзина -->
+    <div id="cartModal" class="modal hidden">
+        <div class="modal-card">
+            <button class="close-btn" data-close="cartModal">&times;</button>
+            <h2>Корзина</h2>
+            <div id="cartItems" class="cart-list"></div>
+
+            <div class="promo-box">
+                <input type="text" id="cartPromoInput" placeholder="Промокод (например, SALE15)">
+                <button type="button" id="applyPromoBtn" class="btn btn-secondary btn-sm">Применить</button>
+            </div>
+            <p id="cartPromoMsg" class="promo-msg"></p>
+
+            <div class="cart-summary">
+                <div class="summary-row"><span>Товары:</span><span id="cartSubtotal">0 ₽</span></div>
+                <div class="summary-row hidden" id="cartDiscountRow"><span>Скидка:</span><span id="cartDiscount" class="discount-text">-0 ₽</span></div>
+                <div class="summary-row"><span>Доставка:</span><span id="cartDelivery">Бесплатно</span></div>
+            </div>
+
+            <div class="cart-footer">
+                <strong>Итого: <span id="cartTotal">0</span> ₽</strong>
+                <button id="checkoutBtn" class="btn btn-primary">Оформить заказ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Админ-панель / Кабинет менеджера -->
+    <div id="adminModal" class="modal hidden">
+        <div class="modal-card modal-xl">
+            <button class="close-btn" data-close="adminModal">&times;</button>
+            <h2 id="adminModalTitle">Админ-панель</h2>
+
+            <div class="tabs">
+                <button id="statsTabBtn" class="tab-btn hidden" data-tab="statsTab">Статистика</button>
+                <button id="productsTabBtn" class="tab-btn active" data-tab="productsTab">Товары</button>
+                <button id="ordersTabBtn" class="tab-btn" data-tab="ordersTab">Заказы</button>
+                <button id="categoriesTabBtn" class="tab-btn hidden" data-tab="categoriesTab">Категории</button>
+                <button id="promosTabBtn" class="tab-btn hidden" data-tab="promosTab">Промокоды</button>
+                <button id="usersTabBtn" class="tab-btn hidden" data-tab="usersTab">Пользователи</button>
+                <button id="logsTabBtn" class="tab-btn hidden" data-tab="logsTab">Логи</button>
+                <button id="settingsTabBtn" class="tab-btn hidden" data-tab="settingsTab">Настройки</button>
+            </div>
+
+            <!-- Вкладка: Статистика -->
+            <div id="statsTab" class="tab-content hidden">
+                <div id="statsCards" class="stats-grid"></div>
+                <div class="export-bar">
+                    <a href="/api/admin/export/orders" class="btn btn-outline btn-sm">Экспорт заказов (CSV / Excel)</a>
+                    <a href="/api/admin/export/products" class="btn btn-outline btn-sm">Экспорт товаров (CSV / Excel)</a>
+                </div>
+                <h3 class="section-subtitle">Топ продаваемых товаров</h3>
+                <div id="topProductsList" class="admin-list"></div>
+            </div>
+
+            <!-- Вкладка: Товары -->
+            <div id="productsTab" class="tab-content">
+                <form id="productForm" class="admin-form">
+                    <input type="hidden" id="prodId">
+                    <div class="form-row">
+                        <input type="text" id="prodName" placeholder="Название товара" required>
+                        <input type="number" id="prodPrice" placeholder="Цена (₽)" min="1" step="0.01" required>
+                    </div>
+                    <div class="form-row">
+                        <select id="prodCategory">
+                            <option value="">Без категории</option>
+                        </select>
+                        <input type="number" id="prodStock" placeholder="Остаток на складе (шт.)" min="0" value="10" required>
+                    </div>
+                    <input type="text" id="prodTags" placeholder="Теги через запятую (например: хит, bluetooth, скидка)">
+                    <input type="file" id="prodImage" accept="image/*">
+                    <small id="prodImageHint" class="form-hint">
+                        Поддерживаются PNG, JPG, GIF, WEBP (до 5 МБ)
+                    </small>
+                    <img id="prodImagePreview" class="image-preview hidden" alt="Предпросмотр товара">
+                    <textarea id="prodDesc" placeholder="Краткое описание" rows="2"></textarea>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="prodSubmitBtn">Добавить товар</button>
+                        <button type="button" class="btn btn-secondary hidden" id="prodCancelEdit">Отмена</button>
+                    </div>
+                </form>
+                <hr>
+                <div id="adminProductList" class="admin-list"></div>
+            </div>
+
+            <!-- Вкладка: Заказы -->
+            <div id="ordersTab" class="tab-content hidden">
+                <div id="adminOrdersList" class="orders-list"></div>
+            </div>
+
+            <!-- Вкладка: Категории -->
+            <div id="categoriesTab" class="tab-content hidden">
+                <form id="categoryForm" class="inline-form">
+                    <input type="text" id="newCategoryName" placeholder="Название новой категории" required>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </form>
+                <div id="adminCategoriesList" class="admin-list"></div>
+            </div>
+
+            <!-- Вкладка: Промокоды -->
+            <div id="promosTab" class="tab-content hidden">
+                <form id="promoForm" class="admin-form">
+                    <div class="form-row">
+                        <input type="text" id="promoCodeInput" placeholder="Код (например, SUMMER20)" required>
+                        <input type="number" id="promoDiscountInput" placeholder="Скидка (%)" min="1" max="90" required>
+                    </div>
+                    <div class="form-row">
+                        <input type="number" id="promoMaxUsesInput" placeholder="Лимит активаций (0 = безлимит)" min="0" value="0">
+                        <input type="date" id="promoExpiresInput" title="Действует до (необязательно)">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Создать промокод</button>
+                </form>
+                <hr>
+                <div id="adminPromosList" class="admin-list"></div>
+            </div>
+
+            <!-- Вкладка: Пользователи -->
+            <div id="usersTab" class="tab-content hidden">
+                <div id="adminUsersList" class="users-list"></div>
+            </div>
+
+            <!-- Вкладка: Логи -->
+            <div id="logsTab" class="tab-content hidden">
+                <div id="adminLogsList" class="logs-list"></div>
+            </div>
+
+            <!-- Вкладка: Настройки -->
+            <div id="settingsTab" class="tab-content hidden">
+                <form id="settingsForm" class="admin-form">
+                    <label class="field-label">Название магазина</label>
+                    <input type="text" id="setStoreName" required>
+
+                    <label class="field-label">Заголовок на главной</label>
+                    <input type="text" id="setHeroTitle" required>
+
+                    <label class="field-label">Подзаголовок на главной</label>
+                    <input type="text" id="setHeroSubtitle">
+
+                    <label class="field-label">Контакты в подвале сайта</label>
+                    <input type="text" id="setContactInfo">
+
+                    <label class="field-label">Стоимость доставки (₽, 0 — бесплатно)</label>
+                    <input type="number" id="setDeliveryCost" min="0" step="1" required>
+
+                    <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+                    <span id="settingsSavedMsg" class="saved-msg"></span>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Личный кабинет (Мои заказы) -->
+    <div id="profileModal" class="modal hidden">
+        <div class="modal-card modal-wide">
+            <button class="close-btn" data-close="profileModal">&times;</button>
+            <h2>Мои заказы</h2>
+            <div id="myOrdersList" class="orders-list"></div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
