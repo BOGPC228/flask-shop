@@ -1,5 +1,5 @@
-flask
+﻿flask
 flask-sqlalchemy
-psycopg2-binary
+psycopg[binary]
 python-dotenv
 gunicorn
